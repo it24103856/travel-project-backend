@@ -1,5 +1,5 @@
 import express, { Router } from 'express';
-import { createContact, getContct,deleteContact,updateContact,sendMessage,getAllMessage} from '../controllers/contactController.js';
+import { createContact, getContct,deleteContact,updateContact,sendMessage,getAllMessage,deleteMessage} from '../controllers/contactController.js';
 import { protect, isAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -14,5 +14,5 @@ router.post('/create', protect, isAdmin, createContact);
 router.delete('/delete/:id', protect, isAdmin, deleteContact);
 router.put('/update/:id', protect, isAdmin, updateContact);
 router.get("/messages",protect,isAdmin,getAllMessage)
-
+router.delete("/delete-message/:id", protect, isAdmin, deleteMessage);
 export default router;

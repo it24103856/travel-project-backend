@@ -107,17 +107,17 @@ export function loginUser(req, res) {
 }
 
 // 3. Get User Data
-// userController.js එකේ getuser එක මෙහෙම වෙනස් කරන්න
+
 export async function getuser(req, res) {
     try {
-        // middleware එකෙන් req.user.email ලැබෙනවා නම්:
+        // middleware 
         const user = await User.findOne({ email: req.user.email });
         
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        res.json(user); // සම්පූර්ණ user object එකම යවනවා (image එකත් එක්ක)
+        res.json(user); //wholle user data return karanawa with image
     } catch (error) {
         res.status(500).json({ message: "Error fetching user data", error: error.message });
     }
@@ -132,6 +132,19 @@ export async function getAllUsers(req,res){
     catch(error){
         res.status(500).json({message:"Failed to fetch users",error:error.message})
 
+    }
+}
+
+export async function deleteUser(req,res){
+    const email=req.params.email;
+    try{
+        const result=await User.deleteOne({email:email});
+        if(result.deletedCount===0){
+            return res.status(404).json({message:"User not found"});
+        }
+        res.json({message:"User deleted successfully"});
+    }catch(error){
+        res.status(500).json({message:"Error deleting user",error:error.message});
     }
 }
 
@@ -246,4 +259,38 @@ export async function validateOtp(req,res){
     }
     
 }
+
+export async function updateUserStatus(req, res) {
+    const email= req.params.email;
+    const isBlockValue= req.body.isblocked;
+
+    try {
+        const result = await User.updateOne({ email: email }, { $set: { isblocked: isBlockValue } });
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        res.json({ message: "User status updated successfully" });
+}   catch (error) {
+        res.status(500).json({ message: "Error updating user status", error: error.message });
+    }
+}
+
+
+export async function updateUserRole(req,res){
+    const email=req.params.email;
+    const newRole=req.body.role;
+
+    try{
+        
+        const result=await User.updateOne({email:email},{$set:{role:newRole}});
+        if(result.matchedCount===0){
+            return res.status(404).json({message:"User not found"});
+        }
+        res.json({message:"User role updated successfully"});
+    }catch(error){
+        res.status(500).json({message:"Error updating user role",error:error.message});
+    }
+
+
+    }
 
