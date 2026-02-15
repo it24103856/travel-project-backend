@@ -43,6 +43,8 @@ export async function registerUser(req, res) {
             email: data.email,
             password: hashedPassword,      
             image: data.image || "/default-profile.png",
+            address: data.address || "",
+            phone: data.phone || "",
         });
 
         const result = await newUser.save();
@@ -79,6 +81,11 @@ export function loginUser(req, res) {
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
+           // Check if the user is blocked
+        if(user.isblocked){
+            return res.status(403).json({ message: "Your account is blocked. Please contact support." });
+        }
+
 
         const isPasswordValid = bcrypt.compareSync(password, user.password);
         if (isPasswordValid) {
@@ -89,6 +96,9 @@ export function loginUser(req, res) {
                 lastName: user.lastName,
                 image: user.image,
                 isemailverified: user.isemailverified,
+                address: user.address,
+                phone: user.phone,
+                isblocked: user.isblocked
             };
 
             const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7h' });
@@ -172,6 +182,8 @@ export async function googlelogin(req, res) {
                 password: hashedPassword,
                 image: googleUser.picture || "/default.jpg",
                 isemailverified: true,
+                address: "",
+                phone: "",
             });
             await user.save();
         }
@@ -186,6 +198,8 @@ export async function googlelogin(req, res) {
             image: user.image,
             role: user.role,
             isemailverified: user.isemailverified,
+            address: user.address,
+            phone: user.phone
         };
         const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "7d" });
         return res.json({ message: "Login successful", token, role: user.role });
@@ -218,9 +232,9 @@ export async function sendOtp(req, res) {
         });
         await newOtpEntry.save();
 
-        // මෙතන EMAIL_USER වෙනුවට EMAIL ලෙස නිවැරදි කරන්න
+       
         const mailOptions = {
-            from: process.env.EMAIL, // .env එකේ තියෙන නමම පාවිච්චි කරන්න
+            from: process.env.EMAIL, 
             to: email,
             subject: "Password Reset OTP",
             text: `Your OTP for password reset is: ${generatedOtp}. This code is valid for 10 minutes.`
@@ -228,7 +242,7 @@ export async function sendOtp(req, res) {
 
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
-                console.error("Mail Error:", error); // ලෙඩේ බලාගන්න console එකට දාන්න
+                console.error("Mail Error:", error); 
                 return res.status(500).json({ message: "Error sending OTP", error: error.message });
             }
             return res.json({ message: "OTP sent successfully!", status: "Email sent" });
@@ -294,3 +308,25 @@ export async function updateUserRole(req,res){
 
     }
 
+    // user update 
+
+export const updateUser = async (req, res) => {
+    try {
+        const user = await User.findOne({ email: req.params.email });
+
+        if (user) {
+            user.firstName = req.body.firstName || user.firstName;
+            user.lastName = req.body.lastName || user.lastName;
+            user.phone = req.body.phone || user.phone;
+            user.address = req.body.address || user.address;
+            user.image = req.body.image || user.image;
+
+            const updatedUser = await user.save();
+            res.json(updatedUser);
+        } else {
+            res.status(404).json({ message: "User not found" });
+        }
+    } catch (error) {
+        res.status(500).json({ message: "Server error" });
+    }
+};

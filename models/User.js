@@ -36,7 +36,19 @@ const userSchema = new mongoose.Schema(
             image: {
                 type: String,
                 default: "/default-profile.png",
-            }
+            },
+            address : {
+                type: String,
+                default: false,
+            },
+            phone: {
+                type: String,
+                default: "",
+                validator:function(v){
+                    return v==="" || /^\d{10}$/.test(v);
+                },
+                message: props => `${props.value} is not a valid phone number!`
+            },
         }
     );
     
