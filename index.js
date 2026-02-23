@@ -7,6 +7,7 @@ import cors from "cors"
 //import routes
 import contactRoutes from "./Routes/contactRoutes.js"
 import userRoutes from "./Routes/userRoutes.js"
+import driverRoutes from "./Routes/driverRoutes.js"
 
 dotenv.config()
 const mongourl = process.env.Mongo_Url;
@@ -48,6 +49,7 @@ app.use(express.json())
 
 app.use("/api/users", userRoutes)
 app.use("/api/contact", contactRoutes)
+app.use("/api/driver", driverRoutes)
 
 app.listen(3000, () => {
     console.log("server started at port 3000")
