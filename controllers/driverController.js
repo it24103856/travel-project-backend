@@ -10,7 +10,8 @@ export const createDriver=async(req,res)=>{
             address,
             licenseNumber,
             vehicleType,
-            profileImage
+            profileImage,
+            description
         }=req.body;   
 
         const newDriver=await Driver.create({
@@ -20,7 +21,8 @@ export const createDriver=async(req,res)=>{
             address,
             licenseNumber,
             vehicleType,
-            profileImage
+            profileImage,
+            description
         });
 
         const savedDriver=await newDriver.save();
@@ -55,6 +57,24 @@ export const getAllDrivers=async(req,res)=>{
 
 }
 
+export const getAllDriversed = async (req, res) => {
+    try {
+        // මෙන්න මෙතනට මම "email" සහ "address" කියන දෙකම එකතු කළා
+        // එවිට Frontend එකේදී undefined error එක එන්නේ නැහැ
+        const drivers = await Driver.find().select("name vehicleType profileImage phone email address"); 
+        
+        res.status(200).json({ 
+            message: "Fetched successfully", 
+            data: drivers 
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            message: "Failed to fetch", 
+            error: error.message 
+        });
+    }
+}
+
 //update driver
 
 export const updateDriver=async(req,res)=>{
@@ -67,7 +87,8 @@ export const updateDriver=async(req,res)=>{
             address,
             licenseNumber,
             vehicleType,
-            profileImage
+            profileImage,
+            description
         }=req.body;   
         const driver=await Driver.findOneAndUpdate({ email:email.toLowerCase()},{
             name,
@@ -76,7 +97,8 @@ export const updateDriver=async(req,res)=>{
             address,
             licenseNumber,
             vehicleType,
-            profileImage
+            profileImage,
+            description
         },{new:true});
 
         if(!driver){

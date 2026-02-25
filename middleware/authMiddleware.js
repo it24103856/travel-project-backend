@@ -21,10 +21,11 @@ export const protect = (req, res, next) => {
     }
 }
 
-export const isAdmin=(req,res,next)=>{
-    if(req.user && req.user.role === "admin"){
+export const isAdmin = (req, res, next) => {
+    // req.user එකේ isAdmin true ද කියා බලනවා
+    if (req.user && req.user.isAdmin === true) {
         next();
-    }else{
-        return res.status(403).json({message:"Forbidden, Admins only"})
+    } else {
+        res.status(403).json({ message: "ඔබ Admin කෙනෙකු නොවේ! ප්‍රවේශය තහනම්." });
     }
-}
+};

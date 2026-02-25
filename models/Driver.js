@@ -29,6 +29,10 @@ const driverSchema=new mongoose.Schema({
     profileImage: {
          type: String,
             required: true
+         },
+         description: {
+            type: String,
+            required: false
          }
 })
 
