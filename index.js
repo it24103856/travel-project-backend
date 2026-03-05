@@ -10,6 +10,9 @@ import userRoutes from "./Routes/userRoutes.js"
 import driverRoutes from "./Routes/driverRoutes.js"
 import dns from "node:dns";
 import hotelRouter from "./Routes/hotelRoutes.js";
+import feedbackRoutes from "./Routes/feedbackRoutes.js";
+import BookingRoutes from "./Routes/bookingRoutes.js";
+import paymentRoutes from "./Routes/paymentRoutes.js";
 
 dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
@@ -56,6 +59,9 @@ app.use("/api/users", userRoutes)
 app.use("/api/contact", contactRoutes)
 app.use("/api/driver", driverRoutes)
 app.use("/api/hotels", hotelRouter);
+app.use("/api/feedback", feedbackRoutes);
+app.use("/api/bookings", BookingRoutes);
+app.use("/api/payments", paymentRoutes);
 
 
 
