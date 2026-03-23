@@ -1,4 +1,4 @@
-import mongoose from "mongoose"; // අනිවාර්යයෙන්ම මෙය තිබිය යුතුයි
+import mongoose from "mongoose"; // This must be included
 import Booking from "../models/Booking.js";
 
 // --- 1. Create New Booking ---
@@ -96,24 +96,24 @@ export const deleteBooking = async (req, res) => {
     }
 };
 
-// --- 6. Get Bookings By User ID (වැදගත්ම කොටස) ---
+// --- 6. Get Bookings By User ID (Important section) ---
 export const getBookingsByUserId = async (req, res) => {
     try {
         const { userId } = req.params;
 
-        // URL එකේ ඇති ":" ලකුණ ඉවත් කිරීම
+        // Remove ":" symbol from URL
         const cleanId = userId?.startsWith(":") ? userId.substring(1) : userId;
 
-        // ID එක ObjectId එකක් දැයි පරීක්ෂා කිරීම (Crash වීම වැළැක්වීමට)
+        // Check if ID is an ObjectId (to prevent crash)
         if (!mongoose.Types.ObjectId.isValid(cleanId)) {
             return res.status(400).json({ success: false, message: "Invalid User ID format" });
         }
 
-        // Database Query එක - String ID එක ObjectId එකක් බවට පත් කර සෙවීම
+        // Database Query - Convert String ID to ObjectId and search
         const customerBookings = await Booking.find({ 
             userId: new mongoose.Types.ObjectId(cleanId) 
         })
-        .populate("hotelId") // Hotel විස්තර මෙතැනින් ලබා ගනී
+        .populate("hotelId") // Get Hotel details from here
         .sort({ createdAt: -1 });
 
         return res.status(200).json({

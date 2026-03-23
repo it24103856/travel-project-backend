@@ -23,7 +23,7 @@ export const getFeedback = async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
 
-        //  Schema එකේ තියෙන්නේ 'userId' මිස 'user' නොවේ
+        // Schema has 'userId' not 'user'
         const feedbacks = await Feedback.find({ userId: req.user.id })
             .populate("userId", "firstName lastName email")
             .sort({ createdAt: -1 })
@@ -33,7 +33,7 @@ export const getFeedback = async (req, res) => {
         const totalFeedbacks = await Feedback.countDocuments({ userId: req.user.id });
         const totalPages = Math.ceil(totalFeedbacks / limit);
 
-        // මෙතැනදී json එකක් පමණක් යවන්න (දෙපාරක් res.send කරන්න එපා)
+        // Send only one JSON here (don't send res twice)
         return res.status(200).json({ 
             feedbacks, 
             totalPages, 
@@ -73,7 +73,7 @@ export const getAllFeedback = async (req, res) => {
 // 4. Update Feedback
 export const updateFeedback = async (req, res) => {
     try {
-        const { id } = req.params; // Route එකේ තිබෙන්නේ :id ලෙසයි
+        const { id } = req.params; // Route has :id like this
         const { feedback, rating, category } = req.body;
         const updatedFeedback = await Feedback.findOneAndUpdate(
             { _id: id, userId: req.user.id },

@@ -25,9 +25,9 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// 2. Middleware: Check if Admin (Routes වල භාවිතා කිරීමට)
+// 2. Middleware: Check if Admin (Routes )
 export const isAdmin = (req, res, next) => {
-    // req.user ලැබෙන්නේ protect middleware එක හරහායි
+    // req.user protect middleware 
     if (req.user && req.user.role === "admin") {
         console.log("Access Granted: User is Admin");
         next();
@@ -56,7 +56,7 @@ export async function registerUser(req, res) {
             image: data.image || "/default-profile.png",
             address: data.address || "",
             phone: data.phone || "",
-            role: data.role || "user" // Default role එක user ලෙස සකසයි
+            role: data.role || "user" // Default role- user 
         });
 
         const result = await newUser.save();
@@ -71,7 +71,7 @@ export async function registerUser(req, res) {
     }
 }
 
-// 4. User Login (Token එකේ Role එක ඇතුළත් කර ඇත)
+// 4. User Login (Token - Based Authentication)
 export function loginUser(req, res) {
     const { email, password } = req.body;
 
@@ -86,11 +86,11 @@ export function loginUser(req, res) {
 
         const isPasswordValid = bcrypt.compareSync(password, user.password);
         if (isPasswordValid) {
-            // Token එක ඇතුළට දාන Payload එක - මෙතන තමයි වැදගත්ම දේ
+            // Token Payload  - 
             const payload = {
                 id: user._id,
                 email: user.email,
-                role: user.role, // "admin" හෝ "user"
+                role: user.role, // "admin" or "user"
                 isAdmin: user.role === "admin",
                 firstName: user.firstName,
                 lastName: user.lastName,
@@ -112,7 +112,7 @@ export function loginUser(req, res) {
     });
 }
 
-// 5. Google Login (Token එකේ Role එක ඇතුළත් කර ඇත)
+// 5. Google Login (Token 
 export async function googlelogin(req, res) {
     const accessToken = req.body.token;
     if (!accessToken) return res.status(400).json({ message: "Missing Google access token" });

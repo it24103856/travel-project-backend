@@ -5,7 +5,9 @@ import {
     updatePaymentStatus, 
     getMyPayments, 
     requestPaymentCancel, 
-    approveCancelRequest 
+    approveCancelRequest ,
+    deletePayment,
+    getAllPayments
 } from "../controllers/paymentController.js";
 import { isAdmin,protect } from "../middleware/authMiddleware.js";
 
@@ -29,9 +31,17 @@ router.post("/request-cancel", protect, requestPaymentCancel);
 router.get("/admin/pending", protect, isAdmin, getAllPendingPayments);
 
 // 5.  (Status)  (Approve/Reject)
-router.patch("/admin/update-status/:paymentId", protect, isAdmin, updatePaymentStatus);
+router.put("/admin/update-status/:paymentId", protect, isAdmin, updatePaymentStatus);
+
+
 
 // 6.  (Refund Approve)
-router.patch("/admin/approve-cancel", protect, isAdmin, approveCancelRequest);
+router.put("/admin/approve-cancel", protect, isAdmin, approveCancelRequest);
+
+// 7.  (Delete Payment)
+router.delete("/admin/delete/:paymentId", protect, isAdmin, deletePayment);
+
+// 8.  (Get All Payments)  (Admin)
+router.get("/admin/all", protect, isAdmin, getAllPayments);
 
 export default router;

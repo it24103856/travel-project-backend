@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const bookingSchema = new mongoose.Schema({
     hotelId: { type: mongoose.Schema.Types.ObjectId, ref: "Hotel", required: true },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Auth ඇත්නම් පමණක්
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Only if authenticated
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
     email: { type: String, required: true },

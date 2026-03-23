@@ -20,7 +20,7 @@ export const createHotel = async (req, res) => {
                 ...room,
                 discount: discountAmount,
                 finalPrice: originalPrice - discountAmount,
-                images: room.images || [] // Frontend එකෙන් එන room image URLs මෙතනට වැටේ
+                images: room.images || [] // Frontend 
             };
         });
 
@@ -42,7 +42,7 @@ export const updateHotel = async (req, res) => {
     try {
         let updateData = req.body;
 
-        // Room updates handle කිරීම
+        // Room updates handle 
         if (updateData.roomTypes) {
             updateData.roomTypes = updateData.roomTypes.map(room => {
                 const originalPrice = Number(room.originalPrice) || 0;
@@ -53,7 +53,7 @@ export const updateHotel = async (req, res) => {
                     ...room, 
                     discount: discountAmount, 
                     finalPrice: originalPrice - discountAmount,
-                    images: room.images || [] // Existing සහ New image URLs මෙතනට ලැබේ
+                    images: room.images || [] // Existing  New image URLs 
                 };
             });
         }
@@ -93,7 +93,7 @@ export const deleteHotel = async (req, res) => {
 // --- Get All Hotels ---
 export const getAllHotels = async (req, res) => {
     try {
-        const hotels = await Hotel.find().sort({ createdAt: -1 }); // අලුත්ම ඒවා උඩට එන ලෙස
+        const hotels = await Hotel.find().sort({ createdAt: -1 }); // Show newest ones at the top
         res.status(200).json({ success: true, data: hotels });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

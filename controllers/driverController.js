@@ -59,8 +59,8 @@ export const getAllDrivers=async(req,res)=>{
 
 export const getAllDriversed = async (req, res) => {
     try {
-        // මෙන්න මෙතනට මම "email" සහ "address" කියන දෙකම එකතු කළා
-        // එවිට Frontend එකේදී undefined error එක එන්නේ නැහැ
+        // I've added both "email" and "address" here
+        // So there won't be undefined error in Frontend
         const drivers = await Driver.find().select("name vehicleType profileImage phone email address"); 
         
         res.status(200).json({ 

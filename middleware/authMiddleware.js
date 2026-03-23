@@ -22,7 +22,7 @@ export const protect = (req, res, next) => {
 }
 
 export const isAdmin = (req, res, next) => {
-    // req.user එකේ isAdmin true ද කියා බලනවා
+    // Check if isAdmin is true in req.user
     if (req.user && req.user.isAdmin === true) {
         next();
     } else {

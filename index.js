@@ -13,6 +13,8 @@ import hotelRouter from "./Routes/hotelRoutes.js";
 import feedbackRoutes from "./Routes/feedbackRoutes.js";
 import BookingRoutes from "./Routes/bookingRoutes.js";
 import paymentRoutes from "./Routes/paymentRoutes.js";
+import packageRoutes from "./Routes/packageRoutes.js";
+import destinationRoutes from "./Routes/destinationRoutes.js";
 
 dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
@@ -62,6 +64,8 @@ app.use("/api/hotels", hotelRouter);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/bookings", BookingRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/packages", packageRoutes);
+app.use("/api/destinations", destinationRoutes);
 
 
 
