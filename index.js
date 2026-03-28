@@ -15,6 +15,7 @@ import BookingRoutes from "./Routes/bookingRoutes.js";
 import paymentRoutes from "./Routes/paymentRoutes.js";
 import packageRoutes from "./Routes/packageRoutes.js";
 import destinationRoutes from "./Routes/destinationRoutes.js";
+import vehicleRoutes from "./Routes/vehicleRoutes.js";
 
 dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
@@ -66,7 +67,7 @@ app.use("/api/bookings", BookingRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/packages", packageRoutes);
 app.use("/api/destinations", destinationRoutes);
-
+app.use("/api/vehicles", vehicleRoutes);
 
 
 app.listen(3000, () => {

@@ -7,7 +7,8 @@ import {
     requestPaymentCancel, 
     approveCancelRequest ,
     deletePayment,
-    getAllPayments
+    getAllPayments,
+    verifyPaymentReceiptWithAI
 } from "../controllers/paymentController.js";
 import { isAdmin,protect } from "../middleware/authMiddleware.js";
 
@@ -43,5 +44,8 @@ router.delete("/admin/delete/:paymentId", protect, isAdmin, deletePayment);
 
 // 8.  (Get All Payments)  (Admin)
 router.get("/admin/all", protect, isAdmin, getAllPayments);
+
+// 9. AI Receipt Verify (Admin)
+router.post("/admin/verify-receipt/:paymentId", protect, isAdmin, verifyPaymentReceiptWithAI);
 
 export default router;

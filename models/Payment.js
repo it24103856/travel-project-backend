@@ -6,7 +6,7 @@ const paymentSchema = new mongoose.Schema({
     amount: { type: Number, required: true, min: 0 },
     currency: { type: String, default: "LKR" },
     paymentMethod: { type: String, enum: ["card", "bank_transfer", "crypto"], required: true },
-    transactionId: { type: String, unique: true, sparse: true },
+    transactionId: { type: String, unique: true, sparse: true,default: undefined },
     paymentStatus: { 
         type: String, 
         enum: ["pending", "processing", "completed", "failed", "refunded", "cancel_requested"], 
@@ -17,6 +17,18 @@ const paymentSchema = new mongoose.Schema({
         bankName: String,
         paymentDate: Date,
         paidAmount: Number
+    },
+    aiVerification: {
+        isReceipt: Boolean,
+        paymentConfirmed: Boolean,
+        extractedAmount: Number,
+        extractedCurrency: String,
+        transactionId: String,
+        paymentDate: String,
+        confidence: Number,
+        reason: String,
+        verifiedAt: Date,
+        verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
     },
     metadata: { adminNotes: String, cancelReason: String }
 }, { timestamps: true });
