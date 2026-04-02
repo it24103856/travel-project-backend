@@ -12,7 +12,7 @@ import { protect, isAdmin } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 // --- Public Routes ---
-router.post("/create",protect, createBooking); // Allow customer to create a booking
+router.post("/create", createBooking); // Allow customer to create a booking
 
 // --- Admin Only Routes ---
 // 1. View all bookings (needed to display in a table)

@@ -56,7 +56,9 @@ export async function registerUser(req, res) {
             image: data.image || "/default-profile.png",
             address: data.address || "",
             phone: data.phone || "",
-            role: data.role || "user" // Default role- user 
+            role: data.role || "user" ,// Default role- user 
+            interests: data.interests || [], // Default interests- empty array
+
         });
 
         const result = await newUser.save();
