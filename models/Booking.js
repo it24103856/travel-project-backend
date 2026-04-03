@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 
 const bookingSchema = new mongoose.Schema({
+    packageId: { type: mongoose.Schema.Types.ObjectId, ref: "Package" }, // Package booking ekak nam
     hotelId: { type: mongoose.Schema.Types.ObjectId, ref: "Hotel", required: true },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Only if authenticated
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
     email: { type: String, required: true },
@@ -11,6 +12,11 @@ const bookingSchema = new mongoose.Schema({
     checkIn: { type: Date, required: true },
     checkOut: { type: Date, required: true },
     roomType: { type: String, required: true },
+    
+    // Transport Selection
+    driverId: { type: mongoose.Schema.Types.ObjectId, ref: "Driver" }, 
+    vehicleId: { type: mongoose.Schema.Types.ObjectId, ref: "Vehicle" },
+
     adults: { type: Number, default: 1 },
     children: { type: Number, default: 0 },
     totalPrice: { type: Number, required: true },

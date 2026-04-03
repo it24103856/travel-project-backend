@@ -6,14 +6,8 @@ export const createBooking = async (req, res) => {
     try {
         const newBooking = new Booking(req.body);
         const savedBooking = await newBooking.save();
-        
-        res.status(201).json({ 
-            success: true, 
-            message: "Booking successful!", 
-            data: savedBooking 
-        });
+        res.status(201).json({ success: true, data: savedBooking });
     } catch (error) {
-        console.error("Booking Create Error:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -23,7 +17,10 @@ export const getAllBookings = async (req, res) => {
     try {
         const bookings = await Booking.find()
             .populate("hotelId", "name city") 
-            .populate("userId", "firstName lastName email image") 
+            .populate("packageId", "title")
+            .populate("userId", "firstName lastName email") 
+            .populate("driverId", "name phone") // Driver details
+            .populate("vehicleId", "model licensePlate") // Vehicle details
             .sort({ createdAt: -1 }); 
 
         res.status(200).json({ success: true, data: bookings });

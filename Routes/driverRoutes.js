@@ -12,7 +12,7 @@ router.get('/customer/get-all', getAllDriversed);
 router.post('/create', protect, isAdmin, createDriver);
 
 //get all drivers(admin)
-router.get('/get-all', protect, isAdmin, getAllDrivers);
+router.get('/get-all', protect, getAllDrivers);
 
 
 

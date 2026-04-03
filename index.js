@@ -79,7 +79,7 @@ app.get("/", (req, res) => {
 });
 
 // 8. Server Startup
-// වැදගත්: එකම එක app.listen එකක් පමණක් මෙලෙස භාවිතා කරන්න.
+
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`🚀 Server is running on http://192.168.8.136:${PORT}`);
 });
