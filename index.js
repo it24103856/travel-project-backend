@@ -16,6 +16,7 @@ import paymentRoutes from "./Routes/paymentRoutes.js";
 import packageRoutes from "./Routes/packageRoutes.js";
 import destinationRoutes from "./Routes/destinationRoutes.js";
 import vehicleRoutes from "./Routes/vehicleRoutes.js";
+import reviewRoutes from "./Routes/reviewRoutes.js";
 
 // DNS Configuration
 dns.setServers(["1.1.1.1", "8.8.8.8"]);
@@ -72,6 +73,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/packages", packageRoutes);
 app.use("/api/destinations", destinationRoutes);
 app.use("/api/vehicles", vehicleRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 // 7. Health Check Route (Optional)
 app.get("/", (req, res) => {
