@@ -41,24 +41,24 @@ const userSchema = new mongoose.Schema(
         },
         address: {
             type: String,
-            default: "", // මෙතැන 'false' වෙනුවට හිස් string එකක් යොදන්න
+            default: "", 
         },
         phone: {
             type: String,
             default: "",
-            validate: { // 'validator' ලෙස නොව 'validate' ලෙස තිබිය යුතුය
+            validate: { 
                 validator: function(v) {
                     return v === "" || /^\d{10}$/.test(v);
                 },
                 message: props => `${props.value} is not a valid phone number!`
             }
         },
-        interests: { // අලුතින් එකතු කළ කොටස
+        interests: { 
             type: [String],
             default: [],
         },
     },
-    { timestamps: true } // CreatedAt සහ UpdatedAt ස්වයංක්‍රීයව එකතු වේ
+    { timestamps: true }
 );
 
 export default mongoose.model("User", userSchema);

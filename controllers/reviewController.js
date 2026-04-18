@@ -23,7 +23,7 @@ export const createReview = async (req, res) => {
             return res.status(400).json({ success: false, message: "Review කිරීමට නම් Booking එක Confirmed විය යුතුයි." });
         }
 
-        // 4. Checkout දිනය පරීක්ෂා කිරීම
+       
         const now = new Date();
         const checkOutDate = new Date(booking.checkOut);
 
@@ -34,13 +34,13 @@ export const createReview = async (req, res) => {
             });
         }
 
-        // 5. දැනටමත් Review එකක් දී ඇත්දැයි බැලීම
+        
         const alreadyReviewed = await Review.findOne({ bookingId });
         if (alreadyReviewed) {
             return res.status(400).json({ success: false, message: "ඔබ දැනටමත් මෙම සංචාරය සඳහා Review එකක් ලබා දී ඇත." });
         }
 
-        // 6. Review එක නිර්මාණය
+      
         const newReview = new Review({
             bookingId,
             userId,
@@ -51,14 +51,25 @@ export const createReview = async (req, res) => {
         });
 
         await newReview.save();
-        res.status(201).json({ success: true, message: "ස්තුතියි! ඔබේ Review එක සාර්ථකව ලැබුණා." });
+        
+        // Determine redirect page based on hotel/package
+        const redirectTo = newReview.packageId ? 'package_overview' : 'hotel_overview';
+        const redirectId = newReview.packageId || newReview.hotelId;
+        
+        res.status(201).json({ 
+            success: true, 
+            message: "ස්තුතියි! ඔබේ Review එක සාර්ථකව ලැබුණා.",
+            redirect: {
+                page: redirectTo,
+                id: redirectId
+            }
+        });
 
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-// Hotel එකකට අදාළ සියලුම reviews ලබා ගැනීම
 export const getHotelReviews = async (req, res) => {
     try {
         const reviews = await Review.find({ hotelId: req.params.hotelId }).populate("userId", "firstName lastName");
@@ -68,16 +79,14 @@ export const getHotelReviews = async (req, res) => {
     }
 };
 
-// Package එකකට අදාළ සියලුම reviews ලබා ගැනීම
+
 export const getPackageReviews = async (req, res) => {
     try {
         const { packageId } = req.params;
 
-        // PackageId එක හරහා Review සොයා ගැනීම
-        // මෙහිදී populate පාවිච්චි කරන්නේ User ගේ නම ලබා ගැනීමටයි
         const reviews = await Review.find({ packageId })
             .populate("userId", "firstName lastName")
-            .sort({ createdAt: -1 }); // අලුත්ම reviews ඉහළට එන සේ
+            .sort({ createdAt: -1 }); 
 
         res.status(200).json({ 
             success: true, 

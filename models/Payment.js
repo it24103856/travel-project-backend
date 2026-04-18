@@ -10,7 +10,14 @@ const paymentSchema = new mongoose.Schema({
     bookingId: { 
         type: mongoose.Schema.Types.ObjectId, 
         ref: "Booking", 
-        required: true 
+        required: true,
+        index: true 
+    },
+    bookingReference: {
+        type: String,
+        default: function() {
+            return `BK-${this.bookingId.toString().slice(0, 8).toUpperCase()}-${Date.now().toString().slice(-6)}`;
+        }
     },
     amount: { 
         type: Number, 
@@ -27,13 +34,13 @@ const paymentSchema = new mongoose.Schema({
         required: true 
     },
 
-    // ─── FIX: unique + sparse ඉවත් කළා ──────────────────────────────────────
-    // unique: true, sparse: true නිසා null values duplicate key error දෙනවා.
-    // Bank transfer වලට transactionId නෑ — null values allow කරන්න ඕනෙ.
-    // Frontend side BT-XXXX format generate කරලා යවනවා — uniqueness ගැන걱정 නෑ.
+
     transactionId: { 
         type: String,
-        default: null
+        default: null,
+        unique: true,
+        sparse: true,
+        index: true
     },
     // ─────────────────────────────────────────────────────────────────────────
 

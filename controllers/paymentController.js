@@ -1,6 +1,12 @@
 import Payment from "../models/Payment.js";
 import Booking from "../models/Booking.js";
 import { analyzeReceiptWithGemini } from "../services/geminiReceiptService.js";
+import { 
+  validateBookingForPayment, 
+  isTransactionIdUnique,
+  syncPaymentStatusToBooking,
+  generateBookingReference 
+} from "../services/bookingPaymentSyncService.js";
 
 
 export const createManualPayment = async (req, res) => {
@@ -23,10 +29,41 @@ export const createManualPayment = async (req, res) => {
       });
     }
 
+    // Validate that booking exists and belongs to user
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found. Invalid bookingId.",
+      });
+    }
+
+    if (booking.userId.toString() !== req.user.id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized: This booking does not belong to you.",
+      });
+    }
+
+    // Validate transactionId uniqueness if provided
+    if (transactionId) {
+      const isUnique = await isTransactionIdUnique(transactionId);
+      if (!isUnique) {
+        return res.status(409).json({
+          success: false,
+          message: "Transaction ID already exists. Possible duplicate payment.",
+          isDuplicate: true,
+        });
+      }
+    }
+
+    const bookingReference = generateBookingReference(bookingId);
+
     // Create the payment document (initially with status "processing")
     const newPayment = new Payment({
       userId: req.user.id,
       bookingId,
+      bookingReference,
       amount,
       paymentMethod,
       transactionId: transactionId || null,
@@ -79,7 +116,7 @@ export const createManualPayment = async (req, res) => {
           newPayment.paymentStatus = "completed";
           aiNote = "✅ AI auto-verified: Receipt valid and amount matches. Payment approved.";
           // Also update booking status to confirmed
-          await Booking.findByIdAndUpdate(bookingId, { bookingStatus: "confirmed" });
+          await Booking.findByIdAndUpdate(bookingId, { status: "Confirmed" });
         } else {
           // Verification failed – keep status as "processing" for manual review
           aiNote = `⚠️ AI could not auto-verify. Reason: ${aiVerificationResult.reason || "Amount mismatch or invalid receipt"}. Manual review required.`;
@@ -105,6 +142,7 @@ export const createManualPayment = async (req, res) => {
       success: true,
       message: "Payment submitted successfully.",
       paymentId: newPayment._id,
+      bookingReference: newPayment.bookingReference,
       paymentStatus: newPayment.paymentStatus,
     };
 
@@ -153,11 +191,14 @@ export const updatePaymentStatus = async (req, res) => {
         payment.paymentStatus = status;
         await payment.save();
 
-        if (status === "completed") {
-            await Booking.findByIdAndUpdate(payment.bookingId, { bookingStatus: "confirmed" });
-        }
+        // Sync status to booking using the service
+        await syncPaymentStatusToBooking(paymentId, status);
 
-        res.status(200).json({ success: true, message: "Payment and Booking status updated" });
+        res.status(200).json({ 
+          success: true, 
+          message: "Payment and Booking status updated",
+          bookingReference: payment.bookingReference 
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -203,7 +244,7 @@ export const approveCancelRequest = async (req, res) => {
 
         payment.paymentStatus = status;
         if (status === "refunded") {
-            await Booking.findByIdAndUpdate(payment.bookingId, { bookingStatus: "cancelled" });
+            await Booking.findByIdAndUpdate(payment.bookingId, { status: "Cancelled" });
         }
 
         await payment.save();
@@ -271,7 +312,7 @@ export const verifyPaymentReceiptWithAI = async (req, res) => {
             if (!payment.transactionId && aiResult.transactionId) {
                 payment.transactionId = aiResult.transactionId;
             }
-            await Booking.findByIdAndUpdate(payment.bookingId, { bookingStatus: "confirmed" });
+            await Booking.findByIdAndUpdate(payment.bookingId, { status: "Confirmed" });
         } else {
             payment.paymentStatus = "processing";
         }

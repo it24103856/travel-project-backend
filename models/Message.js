@@ -4,8 +4,8 @@ import mongoose from "mongoose";
 const messageSchema = new mongoose.Schema({
     customerId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User", // ඔබගේ User model එකේ නම
-        required: false // ලොග් නොවූ අයටත් message යැවීමට නම් මෙය false කරන්න
+        ref: "User", 
+        required: false 
     },
     firstName: {
         type: String,

@@ -1,4 +1,5 @@
 import Package from "../models/Package.js";
+import Review from "../models/Review.js";
 
 // --- Create Package ---
 export const createPackage = async (req, res) => {
@@ -85,12 +86,33 @@ export const deletePackage = async (req, res) => {
 export const getAllPackages = async (req, res) => {
     try {
         const packages = await Package.find()
-            .populate("destinations",    "name image description")   // Destination details populate
-            .populate("included_hotels", "name images city district rating roomTypes") // Hotel details populate
-            .sort({ createdAt: -1 });                                  // Newest first
+            .populate("destinations",    "name image description")
+            .populate("included_hotels", "name images city district rating roomTypes")
+            .sort({ createdAt: -1 });
 
-        res.status(200).json({ success: true, data: packages });
+        // Calculate average ratings for each package
+        const packagesWithRatings = await Promise.all(
+            packages.map(async (pkg) => {
+                try {
+                    const reviewStats = await Review.aggregate([
+                        { $match: { packageId: pkg._id } },
+                        { $group: { _id: null, averageRating: { $avg: '$rating' }, totalReviews: { $sum: 1 } } }
+                    ]);
+                    
+                    const averageRating = reviewStats.length > 0 ? reviewStats[0].averageRating : 4.5;
+                    const totalReviews = reviewStats.length > 0 ? reviewStats[0].totalReviews : 0;
+                    
+                    return { ...pkg.toObject(), averageRating, totalReviews };
+                } catch (err) {
+                    console.error(`Error calculating rating for package ${pkg._id}:`, err);
+                    return { ...pkg.toObject(), averageRating: 4.5, totalReviews: 0 };
+                }
+            })
+        );
+
+        res.status(200).json({ success: true, data: packagesWithRatings });
     } catch (error) {
+        console.error("Get All Packages Error:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -99,15 +121,29 @@ export const getAllPackages = async (req, res) => {
 export const getSinglePackage = async (req, res) => {
     try {
         const package_ = await Package.findById(req.params.id)
-            .populate("destinations",    "name image description")   // Destination details populate
-            .populate("included_hotels", "name images city district rating roomTypes"); // Hotel details populate
+            .populate("destinations",    "name image description")
+            .populate("included_hotels", "name images city district rating roomTypes");
 
         if (!package_) {
             return res.status(404).json({ success: false, message: "Package not found" });
         }
 
-        res.status(200).json({ success: true, data: package_ });
+        // Calculate average rating for this package
+        const reviewStats = await Review.aggregate([
+            { $match: { packageId: package_._id } },
+            { $group: { _id: null, averageRating: { $avg: '$rating' }, totalReviews: { $sum: 1 } } }
+        ]);
+        
+        const averageRating = reviewStats.length > 0 ? reviewStats[0].averageRating : 4.5;
+        const totalReviews = reviewStats.length > 0 ? reviewStats[0].totalReviews : 0;
+        
+        const pkgData = package_.toObject();
+        pkgData.averageRating = averageRating;
+        pkgData.totalReviews = totalReviews;
+
+        res.status(200).json({ success: true, data: pkgData });
     } catch (error) {
+        console.error("Get Single Package Error:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

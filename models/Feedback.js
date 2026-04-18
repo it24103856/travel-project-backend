@@ -21,7 +21,7 @@ const feedbackSchema = new mongoose.Schema({
     category: {
         type: String,
         required: true,
-        enum: ["driverse", "Vehicles", "All"],
+        enum: ["drivers", "Vehicles", "All"],
     },
     date: {
         type: Date,

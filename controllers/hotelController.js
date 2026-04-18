@@ -1,4 +1,5 @@
 import Hotel from "../models/Hotel.js";
+import Review from "../models/Review.js";
 
 // --- Create Hotel ---
 export const createHotel = async (req, res) => {
@@ -93,9 +94,31 @@ export const deleteHotel = async (req, res) => {
 // --- Get All Hotels ---
 export const getAllHotels = async (req, res) => {
     try {
-        const hotels = await Hotel.find().sort({ createdAt: -1 }); // Show newest ones at the top
-        res.status(200).json({ success: true, data: hotels });
+        const hotels = await Hotel.find().sort({ createdAt: -1 });
+        
+        // Calculate average ratings for each hotel
+        const hotelsWithRatings = await Promise.all(
+            hotels.map(async (hotel) => {
+                try {
+                    const reviewStats = await Review.aggregate([
+                        { $match: { hotelId: hotel._id } },
+                        { $group: { _id: null, averageRating: { $avg: '$rating' }, totalReviews: { $sum: 1 } } }
+                    ]);
+                    
+                    const averageRating = reviewStats.length > 0 ? reviewStats[0].averageRating : 4.5;
+                    const totalReviews = reviewStats.length > 0 ? reviewStats[0].totalReviews : 0;
+                    
+                    return { ...hotel.toObject(), averageRating, totalReviews };
+                } catch (err) {
+                    console.error(`Error calculating rating for hotel ${hotel._id}:`, err);
+                    return { ...hotel.toObject(), averageRating: 4.5, totalReviews: 0 };
+                }
+            })
+        );
+        
+        res.status(200).json({ success: true, data: hotelsWithRatings });
     } catch (error) {
+        console.error("Get All Hotels Error:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -107,8 +130,23 @@ export const getSingleHotel = async (req, res) => {
         if (!hotel) {
             return res.status(404).json({ success: false, message: "Hotel not found" });
         }
-        res.status(200).json({ success: true, data: hotel });
+        
+        // Calculate average rating for this hotel
+        const reviewStats = await Review.aggregate([
+            { $match: { hotelId: hotel._id } },
+            { $group: { _id: null, averageRating: { $avg: '$rating' }, totalReviews: { $sum: 1 } } }
+        ]);
+        
+        const averageRating = reviewStats.length > 0 ? reviewStats[0].averageRating : 4.5;
+        const totalReviews = reviewStats.length > 0 ? reviewStats[0].totalReviews : 0;
+        
+        const hotelData = hotel.toObject();
+        hotelData.averageRating = averageRating;
+        hotelData.totalReviews = totalReviews;
+        
+        res.status(200).json({ success: true, data: hotelData });
     } catch (error) {
+        console.error("Get Single Hotel Error:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
