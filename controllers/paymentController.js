@@ -19,6 +19,7 @@ export const createManualPayment = async (req, res) => {
       receiptUrl,
       paymentDetails,
       transactionId,
+      expectedRemark,
     } = req.body;
 
     // Basic validation
@@ -72,6 +73,7 @@ export const createManualPayment = async (req, res) => {
         bankName: paymentDetails?.bankName || "Manual Payment",
         paymentDate: paymentDetails?.paymentDate || new Date(),
         paidAmount: amount,
+        remark: expectedRemark || paymentDetails?.remark,
       },
       paymentStatus: "processing", // default
       metadata: { adminNotes: "Awaiting automatic AI verification" },
@@ -89,6 +91,7 @@ export const createManualPayment = async (req, res) => {
           receiptUrl,
           expectedAmount: amount,
           expectedCurrency: paymentDetails?.currency || "LKR",
+          expectedRemark: expectedRemark || paymentDetails?.remark,
         });
         console.log("✅ AI result:", JSON.stringify(aiVerificationResult, null, 2));
 
@@ -144,6 +147,7 @@ export const createManualPayment = async (req, res) => {
       paymentId: newPayment._id,
       bookingReference: newPayment.bookingReference,
       paymentStatus: newPayment.paymentStatus,
+      verificationPassed: newPayment.paymentStatus === "completed", // ← NEW: true if auto-approved
     };
 
     // Include AI note if available
@@ -154,6 +158,8 @@ export const createManualPayment = async (req, res) => {
       responseData.aiVerification = {
         confidence: aiVerificationResult.confidence,
         amountMatched: Math.abs(aiVerificationResult.extractedAmount - amount) <= 1,
+        extractedRemark: aiVerificationResult.extractedRemark,
+        reason: aiVerificationResult.reason,
       };
     }
 
@@ -292,6 +298,7 @@ export const verifyPaymentReceiptWithAI = async (req, res) => {
             receiptUrl: payment.receiptUrl,
             expectedAmount: payment.amount,
             expectedCurrency: payment.currency,
+            expectedRemark: payment.paymentDetails?.remark,
         });
 
         const tolerance = 1;
