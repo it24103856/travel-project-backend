@@ -280,4 +280,14 @@ export const updateUser = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: "Server error" });
     }
+}
+
+export async function getUserById(req, res) {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ message: "User not found" });
+        res.json({ success: true, data: user });
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching user", error: error.message });
+    }
 };

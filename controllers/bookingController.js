@@ -1,5 +1,6 @@
 import mongoose from "mongoose"; // This must be included
 import Booking from "../models/Booking.js";
+import Review from "../models/Review.js"; // Added
 
 // --- 1. Create New Booking ---
 export const createBooking = async (req, res) => {
@@ -111,12 +112,27 @@ export const getBookingsByUserId = async (req, res) => {
             userId: new mongoose.Types.ObjectId(cleanId) 
         })
         .populate("hotelId") // Get Hotel details from here
+        .populate("packageId", "title location no_of_days categories gallery") // Get Package details from here
         .sort({ createdAt: -1 });
+
+        // Fetch all reviews for these bookings in a single query
+        const bookingIds = customerBookings.map(b => b._id);
+        const reviews = await Review.find({ bookingId: { $in: bookingIds } });
+
+        // Map reviews by bookingId for O(1) lookup
+        const reviewMap = {};
+        reviews.forEach(r => { reviewMap[r.bookingId.toString()] = r; });
+
+        // Attach review to each booking object
+        const bookingsWithReviews = customerBookings.map(b => ({
+            ...b.toObject(),
+            review: reviewMap[b._id.toString()] || null
+        }));
 
         return res.status(200).json({
             success: true,
-            count: customerBookings.length,
-            data: customerBookings
+            count: bookingsWithReviews.length,
+            data: bookingsWithReviews
         });
 
     } catch (error) {

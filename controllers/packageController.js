@@ -1,5 +1,4 @@
 import Package from "../models/Package.js";
-import Review from "../models/Review.js";
 
 // --- Create Package ---
 export const createPackage = async (req, res) => {
@@ -19,8 +18,13 @@ export const createPackage = async (req, res) => {
             traveller_tips:   req.body.traveller_tips   || [],
             transport:        req.body.transport        || [],
             categories:       req.body.categories       || [],
-            destinations:     req.body.destinations     || [],   // Array of ObjectIds
-            included_hotels:  req.body.included_hotels  || [],   // Array of ObjectIds
+            destinations:     req.body.destinations     || [],
+            included_hotels:  req.body.included_hotels  || [],
+            // ── New fields ────────────────────────────────────────────────────
+            weather:          req.body.weather          || [],
+            interests:        req.body.interests        || [],
+            min_group_size:   req.body.min_group_size   || 1,
+            max_group_size:   req.body.max_group_size   || 20,
         });
 
         await newPackage.save();
@@ -52,8 +56,8 @@ export const updatePackage = async (req, res) => {
             updateData,
             { new: true, runValidators: true }
         )
-        .populate("destinations",    "name image description")   // Destination fields populate
-        .populate("included_hotels", "name images city district rating roomTypes"); // Hotel fields populate
+        .populate("destinations",    "name image description")
+        .populate("included_hotels", "name images city district rating roomTypes");
 
         if (!updatedPackage) {
             return res.status(404).json({ success: false, message: "Package not found" });
@@ -90,29 +94,8 @@ export const getAllPackages = async (req, res) => {
             .populate("included_hotels", "name images city district rating roomTypes")
             .sort({ createdAt: -1 });
 
-        // Calculate average ratings for each package
-        const packagesWithRatings = await Promise.all(
-            packages.map(async (pkg) => {
-                try {
-                    const reviewStats = await Review.aggregate([
-                        { $match: { packageId: pkg._id } },
-                        { $group: { _id: null, averageRating: { $avg: '$rating' }, totalReviews: { $sum: 1 } } }
-                    ]);
-                    
-                    const averageRating = reviewStats.length > 0 ? reviewStats[0].averageRating : 4.5;
-                    const totalReviews = reviewStats.length > 0 ? reviewStats[0].totalReviews : 0;
-                    
-                    return { ...pkg.toObject(), averageRating, totalReviews };
-                } catch (err) {
-                    console.error(`Error calculating rating for package ${pkg._id}:`, err);
-                    return { ...pkg.toObject(), averageRating: 4.5, totalReviews: 0 };
-                }
-            })
-        );
-
-        res.status(200).json({ success: true, data: packagesWithRatings });
+        res.status(200).json({ success: true, data: packages });
     } catch (error) {
-        console.error("Get All Packages Error:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -128,22 +111,8 @@ export const getSinglePackage = async (req, res) => {
             return res.status(404).json({ success: false, message: "Package not found" });
         }
 
-        // Calculate average rating for this package
-        const reviewStats = await Review.aggregate([
-            { $match: { packageId: package_._id } },
-            { $group: { _id: null, averageRating: { $avg: '$rating' }, totalReviews: { $sum: 1 } } }
-        ]);
-        
-        const averageRating = reviewStats.length > 0 ? reviewStats[0].averageRating : 4.5;
-        const totalReviews = reviewStats.length > 0 ? reviewStats[0].totalReviews : 0;
-        
-        const pkgData = package_.toObject();
-        pkgData.averageRating = averageRating;
-        pkgData.totalReviews = totalReviews;
-
-        res.status(200).json({ success: true, data: pkgData });
+        res.status(200).json({ success: true, data: package_ });
     } catch (error) {
-        console.error("Get Single Package Error:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

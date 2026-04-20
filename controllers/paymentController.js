@@ -274,6 +274,7 @@ export const getAllPayments = async (req, res) => {
     try {
         const payments = await Payment.find()
             .populate('userId', 'firstName email')
+            .populate('bookingId', '_id status')
             .sort({ createdAt: -1 }); 
         res.status(200).json({ success: true, data: payments });
     } catch (error) {

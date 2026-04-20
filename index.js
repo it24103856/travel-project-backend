@@ -18,6 +18,8 @@ import destinationRoutes from "./Routes/destinationRoutes.js";
 import vehicleRoutes from "./Routes/vehicleRoutes.js";
 import reviewRoutes from "./Routes/reviewRoutes.js";
 import syncRoutes from "./Routes/syncRoutes.js";
+import recommendRoutes from "./Routes/recommendRoutes.js"; 
+import interactionRoutes from "./Routes/interactionRoutes.js";
 
 // DNS Configuration
 dns.setServers(["1.1.1.1", "8.8.8.8"]);
@@ -76,6 +78,9 @@ app.use("/api/destinations", destinationRoutes);
 app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/sync", syncRoutes);
+app.use("/api/interactions", interactionRoutes);
+app.use("/api/recommend", recommendRoutes);
+
 
 // 7. Health Check Route (Optional)
 app.get("/", (req, res) => {
