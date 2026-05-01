@@ -70,9 +70,11 @@ export const createManualPayment = async (req, res) => {
       transactionId: transactionId || null,
       receiptUrl: receiptUrl || null,
       paymentDetails: {
+        customerName: paymentDetails?.customerName,
         bankName: paymentDetails?.bankName || "Manual Payment",
         paymentDate: paymentDetails?.paymentDate || new Date(),
         paidAmount: amount,
+        currency: paymentDetails?.currency || "LKR",
         remark: expectedRemark || paymentDetails?.remark,
       },
       paymentStatus: "processing", // default
@@ -92,6 +94,7 @@ export const createManualPayment = async (req, res) => {
           expectedAmount: amount,
           expectedCurrency: paymentDetails?.currency || "LKR",
           expectedRemark: expectedRemark || paymentDetails?.remark,
+          expectedPayerName: paymentDetails?.customerName,
         });
         console.log("✅ AI result:", JSON.stringify(aiVerificationResult, null, 2));
 
@@ -105,6 +108,7 @@ export const createManualPayment = async (req, res) => {
           paymentDate: aiVerificationResult.paymentDate,
           confidence: aiVerificationResult.confidence,
           reason: aiVerificationResult.reason,
+          extractedPayerName: aiVerificationResult.extractedPayerName,
           verifiedAt: new Date(),
           verifiedBy: req.user.id, // the user who uploaded the payment
         };
@@ -159,6 +163,7 @@ export const createManualPayment = async (req, res) => {
         confidence: aiVerificationResult.confidence,
         amountMatched: Math.abs(aiVerificationResult.extractedAmount - amount) <= 1,
         extractedRemark: aiVerificationResult.extractedRemark,
+        extractedPayerName: aiVerificationResult.extractedPayerName,
         reason: aiVerificationResult.reason,
       };
     }
@@ -300,6 +305,7 @@ export const verifyPaymentReceiptWithAI = async (req, res) => {
             expectedAmount: payment.amount,
             expectedCurrency: payment.currency,
             expectedRemark: payment.paymentDetails?.remark,
+          expectedPayerName: payment.paymentDetails?.customerName,
         });
 
         const tolerance = 1;

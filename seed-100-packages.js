@@ -1,6 +1,9 @@
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import Package from "./models/Package.js";
+import dns from "dns";
+
+dns.setServers(["0.0.0.0", "8.8.8.8"]);
 
 dotenv.config();
 

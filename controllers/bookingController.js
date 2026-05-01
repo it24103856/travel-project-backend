@@ -1,11 +1,85 @@
 import mongoose from "mongoose"; // This must be included
 import Booking from "../models/Booking.js";
 import Review from "../models/Review.js"; // Added
+import { syncBookingStatusToPayments } from "../services/bookingPaymentSyncService.js";
 
 // --- 1. Create New Booking ---
 export const createBooking = async (req, res) => {
     try {
-        const newBooking = new Booking(req.body);
+        const requestedStartDateValue = req.body.startDate || req.body.checkIn;
+        const requestedEndDateValue = req.body.endDate || req.body.checkOut;
+
+        if (!requestedStartDateValue || !requestedEndDateValue) {
+            return res.status(400).json({
+                success: false,
+                message: "Start and end dates are required."
+            });
+        }
+
+        const requestedStartDate = new Date(requestedStartDateValue);
+        const requestedEndDate = new Date(requestedEndDateValue);
+
+        if (Number.isNaN(requestedStartDate.getTime()) || Number.isNaN(requestedEndDate.getTime())) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid booking date format."
+            });
+        }
+
+        if (requestedStartDate > requestedEndDate) {
+            return res.status(400).json({
+                success: false,
+                message: "Start date must be before or equal to end date."
+            });
+        }
+
+        const { driverId, vehicleId } = req.body;
+        const resourceFilters = [];
+
+        if (driverId) {
+            if (!mongoose.Types.ObjectId.isValid(driverId)) {
+                return res.status(400).json({ success: false, message: "Invalid driverId format" });
+            }
+            resourceFilters.push({ driverId: new mongoose.Types.ObjectId(driverId) });
+        }
+
+        if (vehicleId) {
+            if (!mongoose.Types.ObjectId.isValid(vehicleId)) {
+                return res.status(400).json({ success: false, message: "Invalid vehicleId format" });
+            }
+            resourceFilters.push({ vehicleId: new mongoose.Types.ObjectId(vehicleId) });
+        }
+
+        if (resourceFilters.length > 0) {
+            const overlappingBooking = await Booking.findOne({
+                $and: [
+                    {
+                        $or: resourceFilters
+                    },
+                    {
+                        $and: [
+                            { checkIn: { $lte: requestedEndDate } },
+                            { checkOut: { $gte: requestedStartDate } }
+                        ]
+                    }
+                ]
+            });
+
+            if (overlappingBooking) {
+                return res.status(409).json({
+                    success: false,
+                    message: "Driver or Vehicle is already booked for the selected dates."
+                });
+            }
+        }
+
+        const bookingData = {
+            ...req.body,
+            checkIn: requestedStartDate,
+            checkOut: requestedEndDate
+        };
+
+        const newBooking = new Booking(bookingData);
         const savedBooking = await newBooking.save();
         res.status(201).json({ success: true, data: savedBooking });
     } catch (error) {
@@ -66,6 +140,13 @@ export const updateBookingStatus = async (req, res) => {
 
         if (!updatedBooking) {
             return res.status(404).json({ success: false, message: "Booking not found" });
+        }
+
+        // Attempt to sync booking status to any related payments (non-blocking)
+        try {
+            await syncBookingStatusToPayments(req.params.id, status);
+        } catch (syncError) {
+            console.error("Error syncing booking->payments:", syncError.message);
         }
 
         res.status(200).json({ 

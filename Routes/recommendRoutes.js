@@ -1,5 +1,7 @@
 import express from "express";
 import axios   from "axios";
+import { protect } from "../middleware/authMiddleware.js"; // your JWT middleware
+import User from "../models/User.js";
 
 const router = express.Router();
 
@@ -27,7 +29,7 @@ router.post("/", async (req, res) => {
 // ── POST /api/recommend/behaviour ─────────────────────────────────────────────
 // Behaviour-based recommendation — for returning logged-in users
 // Fetches the user's profile + interaction logs, then forwards to Python
-router.post("/behaviour", async (req, res) => {
+router.post("/behaviour", protect, async (req, res) => {
   try {
     const user_id = req.user?.id;
     if (!user_id) {
@@ -38,9 +40,8 @@ router.post("/behaviour", async (req, res) => {
     const config     = { headers: { Authorization: authHeader } };
     const baseUrl    = `http://localhost:${process.env.PORT || 3000}`;
 
-    // 1. Fetch user profile to get registration interests
-    const userRes  = await axios.get(`${baseUrl}/api/users/${user_id}`, config);
-    const user     = userRes.data?.data || userRes.data;
+    // 1. Fetch user profile to get registration interests (changed)
+    const user     = await User.findById(user_id);
     const user_interests = user?.interests || [];
 
     // 2. Fetch all interaction logs for this user

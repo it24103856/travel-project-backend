@@ -26,3 +26,4 @@ def get_all_packages():
         pkg["id"] = pkg.pop("_id")   # rename _id to id
         cleaned.append(pkg)
     return cleaned
+

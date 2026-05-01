@@ -53,15 +53,19 @@ const paymentSchema = new mongoose.Schema({
         type: String 
     },
     paymentDetails: {
+        customerName: String,
         bankName:    String,
         paymentDate: Date,
-        paidAmount:  Number
+        paidAmount:  Number,
+        currency:    String,
+        remark:      String
     },
     aiVerification: {
         isReceipt:         Boolean,
         paymentConfirmed:  Boolean,
         extractedAmount:   Number,
         extractedCurrency: String,
+        extractedPayerName: String,
         transactionId:     String,
         paymentDate:       String,
         confidence:        Number,

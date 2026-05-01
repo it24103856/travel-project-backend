@@ -157,3 +157,38 @@ export const isTransactionIdUnique = async (transactionId) => {
         throw new Error(`Failed to validate transaction ID: ${error.message}`);
     }
 };
+
+/**
+ * Sync booking status to related payments.
+ * - When booking becomes Confirmed: mark pending/processing payments as completed
+ * - When booking becomes Cancelled: mark pending/processing payments as cancel_requested
+ * @param {string} bookingId
+ * @param {string} newBookingStatus
+ * @returns {Promise<Object>} - result of updateMany
+ */
+export const syncBookingStatusToPayments = async (bookingId, newBookingStatus) => {
+    try {
+        if (!bookingId) throw new Error("Missing bookingId");
+
+        if (newBookingStatus === "Confirmed") {
+            const result = await Payment.updateMany(
+                { bookingId, paymentStatus: { $in: ["pending", "processing"] } },
+                { $set: { paymentStatus: "completed" } }
+            );
+            return result;
+        }
+
+        if (newBookingStatus === "Cancelled") {
+            const result = await Payment.updateMany(
+                { bookingId, paymentStatus: { $in: ["pending", "processing"] } },
+                { $set: { paymentStatus: "cancel_requested" } }
+            );
+            return result;
+        }
+
+        // No automatic action for other statuses
+        return { acknowledged: true, matchedCount: 0, modifiedCount: 0 };
+    } catch (error) {
+        throw new Error(`Failed to sync booking status to payments: ${error.message}`);
+    }
+};

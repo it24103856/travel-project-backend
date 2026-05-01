@@ -29,10 +29,10 @@ ALL_LOCATIONS = [
 SIGNAL_WEIGHTS = {
     "view_short":  1.0,   # viewed < 30 seconds
     "view_long":   2.0,   # viewed >= 30 seconds
-    "booking":     5.0,   # booked a package
-    "rating_high": 4.0,   # rated 4 or 5 stars
-    "rating_mid":  1.0,   # rated 3 stars
-    "rating_low": -3.0,   # rated 1 or 2 stars (negative signal)
+    "booking":     3.0,   # booked a package
+    "rating_high": 5.0,   # rated 4 or 5 stars (booked + loved it — strongest signal)
+    "rating_mid":  2.0,   # rated 3 stars (booked + neutral)
+    "rating_low":  1.0,   # rated 1 or 2 stars (booked but didn't enjoy)
 }
 
 DECAY_RATE = 0.008  # interaction 30 days ago retains ~79% weight
@@ -86,7 +86,6 @@ def build_behaviour_profile(interactions: list, user_interests: list) -> dict:
         "interests":  {"hiking": 5.0, "diving": 2.4, ...},
         "weather":    {"sunny": 6.0, ...},
         "locations":  {"Yala": 5.0, ...},
-        "disliked_categories": {"cultural": True},   # from low ratings
         "has_data": True/False
     }
     """
@@ -94,7 +93,6 @@ def build_behaviour_profile(interactions: list, user_interests: list) -> dict:
     int_scores  = {i: 0.0 for i in ALL_INTERESTS}
     wea_scores  = {w: 0.0 for w in ALL_WEATHER}
     loc_scores  = {l: 0.0 for l in ALL_LOCATIONS}
-    disliked_cats = set()
 
     for log in interactions:
         pkg = log.get("package_id") or {}
@@ -114,9 +112,7 @@ def build_behaviour_profile(interactions: list, user_interests: list) -> dict:
         for cat in pkg.get("categories", []):
             if cat in cat_scores:
                 cat_scores[cat] += weight
-                if is_negative:
-                    disliked_cats.add(cat)
-
+               
         # Interests
         for interest in pkg.get("interests", []):
             if interest in int_scores:
@@ -132,11 +128,6 @@ def build_behaviour_profile(interactions: list, user_interests: list) -> dict:
         if loc in loc_scores:
             loc_scores[loc] += weight
 
-    # Blend in registration interests (fixed +2 boost per interest)
-    for interest in user_interests:
-        if interest in int_scores:
-            int_scores[interest] += 2.0
-
     total_signal = sum(abs(v) for v in cat_scores.values()) + \
                    sum(abs(v) for v in int_scores.values())
 
@@ -145,8 +136,7 @@ def build_behaviour_profile(interactions: list, user_interests: list) -> dict:
         "interests":         int_scores,
         "weather":           wea_scores,
         "locations":         loc_scores,
-        "disliked_cats":     disliked_cats,
-        "has_data":          total_signal > 0 or len(user_interests) > 0,
+        "has_data":          total_signal > 0,
     }
 
 
@@ -203,9 +193,8 @@ def recommend_by_behaviour(
     Main behaviour recommendation function.
     1. Build behaviour profile from interactions + registration interests
     2. Exclude already-booked packages
-    3. Apply negative signal filter
-    4. Cosine similarity score each candidate
-    5. Return top_n sorted results
+    3. Cosine similarity score each candidate
+    4. Return top_n sorted results
     """
     profile = build_behaviour_profile(interactions, user_interests)
 
@@ -221,13 +210,6 @@ def recommend_by_behaviour(
         # Skip already booked packages
         if pkg_id in already_booked_ids:
             continue
-
-        # Negative signal filter — suppress strongly disliked categories
-        pkg_cats = set(pkg.get("categories", []))
-        if pkg_cats & profile["disliked_cats"]:
-            overlap = len(pkg_cats & profile["disliked_cats"])
-            if overlap >= 2:
-                continue  # too many disliked categories — skip entirely
 
         pkg_vec     = build_package_behaviour_vector(pkg).reshape(1, -1)
         similarity  = cosine_similarity(user_vec, pkg_vec)[0][0]
