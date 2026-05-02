@@ -1,4 +1,5 @@
 import Driver from "../models/Driver.js";
+import Booking from "../models/Booking.js";
 
 //create driver
 export const createDriver=async(req,res)=>{
@@ -34,7 +35,8 @@ export const createDriver=async(req,res)=>{
 //get driver by email
 export const getDriver=async(req,res)=>{
     try {
-       const email=req.params.email;
+    console.log("driverController.getDriver received req.params.email:", req.params.email);
+    const email=req.params.email;
         const driver=await Driver.findOne({email:email.toLowerCase()});
         if(!driver){
             return res.status(404).json({message:"Driver not found"})
@@ -59,13 +61,48 @@ export const getAllDrivers=async(req,res)=>{
 
 export const getAllDriversed = async (req, res) => {
     try {
-        // I've added both "email" and "address" here
-        // So there won't be undefined error in Frontend
-        const drivers = await Driver.find().select("name vehicleType profileImage phone email address"); 
-        
+        // This endpoint optionally accepts ?checkIn=YYYY-MM-DD&checkOut=YYYY-MM-DD
+        // and will mark drivers as unavailable if they have a non-cancelled booking
+        // that overlaps the requested date range.
+        const { checkIn, checkOut } = req.query;
+
+        // fetch base driver fields
+        const drivers = await Driver.find().select("name vehicleType profileImage phone email address");
+
+        // determine unavailable drivers if dates provided
+        let unavailableIds = [];
+        if (checkIn && checkOut) {
+            const start = new Date(checkIn);
+            const end = new Date(checkOut);
+
+            const overlapping = await Booking.find({
+                status: { $ne: 'Cancelled' },
+                driverId: { $ne: null },
+                $expr: {
+                    $and: [
+                        { $lt: ["$checkIn", end] },
+                        { $gt: ["$checkOut", start] }
+                    ]
+                }
+            }).select('driverId');
+
+            unavailableIds = overlapping.map(b => b.driverId.toString());
+        }
+
+        const data = drivers.map(d => {
+            const obj = d.toObject();
+            // if driver has explicit isAvailable field in DB respect it when no dates given
+            if (!checkIn || !checkOut) {
+                obj.isAvailable = (obj.isAvailable === undefined) ? true : obj.isAvailable;
+            } else {
+                obj.isAvailable = !unavailableIds.includes(obj._id.toString());
+            }
+            return obj;
+        });
+
         res.status(200).json({ 
             message: "Fetched successfully", 
-            data: drivers 
+            data
         });
     } catch (error) {
         res.status(500).json({ 
@@ -114,6 +151,7 @@ export const updateDriver=async(req,res)=>{
 //delete driver
 export const deleteDriver=async(req,res)=>{
     try {
+        console.log("driverController.deleteDriver received req.params.email:", req.params.email);
         const deleteDriver=await Driver.findOneAndDelete({ email:req.params.email.toLowerCase()});
         if(!deleteDriver){
             return res.status(404).json({message:"Driver not found"})

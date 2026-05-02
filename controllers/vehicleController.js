@@ -1,4 +1,5 @@
 import Vehicle from "../models/Vehicle.js";
+import Booking from "../models/Booking.js";
 
 // Create a new vehicle entry
 export const createVehicle = async (req, res) => {
@@ -26,13 +27,47 @@ export const createVehicle = async (req, res) => {
 // Retrieve all vehicles from the database
 export const getAllVehicles = async (req, res) => {
     try {
-        // Populates driver data (name and contact) along with the vehicle
+        // This endpoint optionally accepts ?checkIn=YYYY-MM-DD&checkOut=YYYY-MM-DD
+        // and will mark vehicles as unavailable if they have a non-cancelled booking
+        // that overlaps the requested date range.
+        const { checkIn, checkOut } = req.query;
+
+        // fetch base vehicle fields
         const vehicles = await Vehicle.find().populate("driverId", "name contactNumber");
-        
+
+        let unavailableIds = [];
+        if (checkIn && checkOut) {
+            const start = new Date(checkIn);
+            const end = new Date(checkOut);
+
+            const overlapping = await Booking.find({
+                status: { $ne: 'Cancelled' },
+                vehicleId: { $ne: null },
+                $expr: {
+                    $and: [
+                        { $lt: ["$checkIn", end] },
+                        { $gt: ["$checkOut", start] }
+                    ]
+                }
+            }).select('vehicleId');
+
+            unavailableIds = overlapping.map(b => b.vehicleId.toString());
+        }
+
+        const data = vehicles.map(v => {
+            const obj = v.toObject();
+            if (!checkIn || !checkOut) {
+                obj.isAvailable = (obj.isAvailable === undefined) ? true : obj.isAvailable;
+            } else {
+                obj.isAvailable = !unavailableIds.includes(obj._id.toString());
+            }
+            return obj;
+        });
+
         res.status(200).json({
             success: true,
-            count: vehicles.length,
-            data: vehicles
+            count: data.length,
+            data
         });
     } catch (error) {
         res.status(500).json({ success: false, message: "Failed to fetch vehicles", error: error.message });
