@@ -99,7 +99,7 @@ export function loginUser(req, res) {
                 image: user.image
             };
 
-            const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7h' });
+            const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '6h' });
             
             res.json({
                 message: "User logged in successfully",
@@ -114,7 +114,7 @@ export function loginUser(req, res) {
     });
 }
 
-// 5. Google Login (Token 
+// 5. Google Login (Token Based Authentication)
 export async function googlelogin(req, res) {
     const accessToken = req.body.token;
     if (!accessToken) return res.status(400).json({ message: "Missing Google access token" });
@@ -154,7 +154,7 @@ export async function googlelogin(req, res) {
             image: user.image
         };
 
-        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "7d" });
+        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "8h" });
         return res.json({ message: "Login successful", token, role: user.role });
     } catch (error) {
         return res.status(500).json({ message: "Google login failed", error: error.message });

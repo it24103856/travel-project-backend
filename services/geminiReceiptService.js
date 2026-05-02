@@ -1,9 +1,7 @@
 import axios from "axios";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Use the model that is available in your API key – we found "gemini-2.5-flash" works.
-const MODEL_NAME = "gemini-2.5-flash";
-const GEMINI_API_KEY="AIzaSyA5lBnGckfEIvvv_P_75dcr3g-Q5Wmbip8"
+const MODEL_NAME = "gemini-3-flash";
 
 const normalizeMimeType = (contentType = "") => {
     const safeType = contentType.split(";")[0].trim().toLowerCase();
@@ -161,7 +159,7 @@ Rules:
     // Step 3: Initialize Gemini and try primary model with retry
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     let result;
-    const fallbackModels = ["gemini-1.5-pro", "gemini-pro", "gemini-pro-vision"];
+    const fallbackModels = ["gemini-2.5-flash", "gemini-2.0-flash-exp", "gemini-1.5-pro-latest"];
 
     try {
         console.log(`🚀 Trying primary model: ${MODEL_NAME}`);
